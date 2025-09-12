@@ -9,6 +9,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register UnitOfWork and service for Users
+builder.Services.AddScoped<BacHa.Models.UnitOfWork.IUnitOfWork, BacHa.Models.UnitOfWork.UnitOfWork>();
+builder.Services.AddScoped<BacHa.Models.Service.IUserService, BacHa.Models.Service.UserService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
