@@ -11,6 +11,8 @@
 tmp
 node_modules
 .sass-cache
+appsettings.json
+Migrations/
 
 # Build results
 [Dd]ebug/
