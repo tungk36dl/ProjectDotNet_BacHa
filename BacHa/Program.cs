@@ -1,5 +1,9 @@
 using BacHa.Models;
+using BacHa.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,32 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 // Register UnitOfWork and service for Users
 builder.Services.AddScoped<BacHa.Models.UnitOfWork.IUnitOfWork, BacHa.Models.UnitOfWork.UnitOfWork>();
 builder.Services.AddScoped<BacHa.Models.Service.IUserService, BacHa.Models.Service.UserService>();
+
+// JWT and Auth
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSection["Key"]);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidateAudience = true,
+            ValidAudience = jwtSection["Audience"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateLifetime = true
+        };
+    });
+
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();
 
@@ -29,6 +59,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

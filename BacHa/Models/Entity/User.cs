@@ -17,5 +17,11 @@ namespace BacHa.Models
     public string? FullName { get; set; }
 
     public bool IsActive { get; set; } = true;
+    
+    // Hashed password (store salted+hashed value)
+    public string? PasswordHash { get; set; }
+
+    // optional role/claims
+    public string? Role { get; set; }
     }
 }
