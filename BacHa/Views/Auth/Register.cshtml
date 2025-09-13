@@ -4,31 +4,137 @@
     ViewData["Title"] = "Register";
 }
 
-<h1>Register</h1>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Register</h4>
 
-<form asp-action="Register" method="post">
-    <div class="form-group">
-        <label asp-for="UserName"></label>
-        <input asp-for="UserName" class="form-control" />
-        <span asp-validation-for="UserName" class="text-danger"></span>
+                <form asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label"></label>
+                        <input asp-for="UserName" class="form-control" />
+                        @Html.ValidationMessageFor(m => m.UserName, null, new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" />
+                        @Html.ValidationMessageFor(m => m.Email, null, new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input id="password" name="password" type="password" class="form-control" />
+                        @* Show server-side validation errors for non-model field 'Password' *@
+                        @if (ViewData.ModelState.TryGetValue("Password", out var pwdState) && pwdState.Errors.Count > 0)
+                        {
+                            <div class="text-danger mt-1">
+                                @foreach (var err in pwdState.Errors)
+                                {
+                                    <div>@err.ErrorMessage</div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                        <a asp-action="Login" class="btn btn-link">Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input name="password" type="password" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-    <a asp-action="Login" class="btn btn-link">Login</a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+            const form = document.querySelector('form[asp-action="Register"]');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                // clear previous errors
+                document.querySelectorAll('.text-danger._ajax').forEach(n => n.remove());
+                document.querySelectorAll('[data-ajax-summary]').forEach(n => n.textContent = '');
+
+                const formData = new FormData(form);
+                const token = form.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                const body = new URLSearchParams();
+                for (const pair of formData.entries()) {
+                    body.append(pair[0], pair[1]);
+                }
+
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: body.toString()
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    // reload to reflect login state or redirect
+                    window.location.href = '/';
+                    return;
+                }
+
+                // show general message
+                if (data.message) {
+                    let summary = document.querySelector('[asp-validation-summary]') || document.querySelector('[data-ajax-summary]');
+                    if (!summary) {
+                        summary = document.createElement('div');
+                        summary.setAttribute('data-ajax-summary', '');
+                        summary.className = 'text-danger mb-2';
+                        form.prepend(summary);
+                    }
+                    summary.textContent = data.message;
+                }
+
+                // show field errors
+                if (data.fieldErrors) {
+                    for (const field in data.fieldErrors) {
+                        const messages = data.fieldErrors[field];
+                        // try to find input by name (for model fields use property name)
+                        let input = form.querySelector('[name="' + field + '"]') || form.querySelector('[name="' + field.replace('User.', '') + '"]') || form.querySelector('[name="' + field + '"]');
+                        // if not found, try asp-for generated id
+                        if (!input) input = document.getElementById(field) || document.getElementById('User_' + field);
+
+                        const container = document.createElement('div');
+                        container.className = 'text-danger _ajax mt-1';
+                        container.innerHTML = messages.map(m => '<div>' + m + '</div>').join('');
+
+                        if (input) {
+                            input.parentNode.appendChild(container);
+                        } else {
+                            // append to summary
+                            let summary = document.querySelector('[data-ajax-summary]');
+                            if (!summary) {
+                                summary = document.createElement('div');
+                                summary.setAttribute('data-ajax-summary', '');
+                                summary.className = 'text-danger mb-2';
+                                form.prepend(summary);
+                            }
+                            summary.appendChild(container);
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
 }

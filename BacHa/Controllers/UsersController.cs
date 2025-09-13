@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using BacHa.Models;
-using BacHa.Models.Service;
 using System;
 using System.Threading.Tasks;
+using BacHa.Models.Service;
 
 namespace BacHa.Controllers
 {

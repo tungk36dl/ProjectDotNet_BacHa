@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BacHa.Models.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 
 // Register UnitOfWork and service for Users
 builder.Services.AddScoped<BacHa.Models.UnitOfWork.IUnitOfWork, BacHa.Models.UnitOfWork.UnitOfWork>();
-builder.Services.AddScoped<BacHa.Models.Service.IUserService, BacHa.Models.Service.UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // JWT and Auth
 var jwtSection = builder.Configuration.GetSection("Jwt");

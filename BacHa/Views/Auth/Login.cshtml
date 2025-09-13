@@ -2,17 +2,75 @@
     ViewData["Title"] = "Login";
 }
 
-<h1>Login</h1>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Login</h4>
 
-<form asp-action="Login" method="post">
-    <div class="form-group">
-        <label>Username or Email</label>
-        <input name="usernameOrEmail" class="form-control" />
+                <form asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    <div class="mb-3">
+                        <label for="usernameOrEmail" class="form-label">Username or Email</label>
+                        <input id="usernameOrEmail" name="usernameOrEmail" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input id="password" name="password" type="password" class="form-control" />
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                        <a asp-action="Register" class="btn btn-link">Register</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input name="password" type="password" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
-    <a asp-action="Register" class="btn btn-link">Register</a>
-</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+            const form = document.querySelector('form[asp-action="Login"]');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                document.querySelectorAll('.text-danger._ajax').forEach(n => n.remove());
+                document.querySelectorAll('[data-ajax-summary]').forEach(n => n.textContent = '');
+
+                const formData = new FormData(form);
+                const body = new URLSearchParams();
+                for (const pair of formData.entries()) body.append(pair[0], pair[1]);
+
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body: body.toString()
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                if (data.message) {
+                    let summary = document.querySelector('[asp-validation-summary]');
+                    if (!summary) {
+                        summary = document.createElement('div');
+                        summary.setAttribute('data-ajax-summary', '');
+                        summary.className = 'text-danger mb-2';
+                        form.prepend(summary);
+                    }
+                    summary.textContent = data.message;
+                }
+            });
+        })();
+    </script>
+}
