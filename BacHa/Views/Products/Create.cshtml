@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Create Product";
+}
+
+<h1>Create Product</h1>
+
+<div class="alert alert-warning">
+    <h5>Authentication Required</h5>
+    <p>This page requires authentication. Only logged-in users can access this page.</p>
+    <p><strong>Current User:</strong> @ViewContext.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</p>
+</div>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label for="productName" class="form-label">Product Name</label>
+        <input type="text" class="form-control" id="productName" name="productName" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="price" class="form-label">Price</label>
+        <input type="number" class="form-control" id="price" name="price" step="0.01" min="0">
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Create Product</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+<div class="mt-4">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+</div>

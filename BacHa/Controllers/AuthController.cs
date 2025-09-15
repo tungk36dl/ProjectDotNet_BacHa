@@ -1,10 +1,12 @@
 using BacHa.Models;
 using BacHa.Services;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 using System;
 using BacHa.Models.Service;
+using BacHa.Models.Service.UserService;
 
 namespace BacHa.Controllers
 {
@@ -45,27 +47,75 @@ namespace BacHa.Controllers
                 if (op.Success)
                 {
                     var token = _jwtService.GenerateToken(model);
+                    var refreshToken = _jwtService.GenerateRefreshToken();
+                    
+                    // Update user with refresh token
+                    model.RefreshToken = refreshToken;
+                    model.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                    await _userService.UpdateAsync(model);
+                    
+                    // Set cookies
                     Response.Cookies.Append("X-Access-Token", token);
-                    return Json(new { success = true });
+                    Response.Cookies.Append("X-Refresh-Token", refreshToken);
+                    
+                    return Json(new { success = true, token = token, refreshToken = refreshToken });
                 }
-                return Json(new { success = false, message = op.Message, fieldErrors = op.FieldErrors });
+
+                // try parse field errors from ErrorDetails
+                object? fieldErrors = null;
+                if (!string.IsNullOrEmpty(op.ErrorDetails))
+                {
+                    try
+                    {
+                        fieldErrors = System.Text.Json.JsonSerializer.Deserialize<object>(op.ErrorDetails);
+                    }
+                    catch { }
+                }
+
+                return Json(new { success = false, message = op.Message, fieldErrors });
             }
 
             if (op.Success)
             {
-                    var token = _jwtService.GenerateToken(model);
+                var token = _jwtService.GenerateToken(model);
+                var refreshToken = _jwtService.GenerateRefreshToken();
+                
+                // Update user with refresh token
+                model.RefreshToken = refreshToken;
+                model.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                await _userService.UpdateAsync(model);
+                
+                // Set cookies
                 Response.Cookies.Append("X-Access-Token", token);
+                Response.Cookies.Append("X-Refresh-Token", refreshToken);
+                
                 return RedirectToAction("Index", "Home");
             }
 
             if (!string.IsNullOrWhiteSpace(op.Message)) ModelState.AddModelError(string.Empty, op.Message);
-            foreach (var kv in op.FieldErrors)
+
+            if (!string.IsNullOrEmpty(op.ErrorDetails))
             {
-                foreach (var err in kv.Value)
+                try
                 {
-                    ModelState.AddModelError(kv.Key, err);
+                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<string>>>(op.ErrorDetails!);
+                    if (dict != null)
+                    {
+                        foreach (var kv in dict)
+                        {
+                            foreach (var err in kv.Value)
+                            {
+                                ModelState.AddModelError(kv.Key, err);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    ModelState.AddModelError(string.Empty, op.ErrorDetails);
                 }
             }
+
             return View(model);
         }
 
@@ -82,7 +132,8 @@ namespace BacHa.Controllers
             }
 
             // find user by username or email
-            var users = await _userService.GetAllAsync();
+            var usersResp = await _userService.GetAllAsync();
+            var users = usersResp.Data ?? new List<User>();
             var user = users.Find(u => string.Equals(u.UserName, usernameOrEmail, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(u.Email, usernameOrEmail, StringComparison.OrdinalIgnoreCase));
 
@@ -105,11 +156,20 @@ namespace BacHa.Controllers
 
             try
             {
-                // create token
+                // Generate tokens
                 var token = _jwtService.GenerateToken(user);
-                Response.Cookies.Append("X-Access-Token", token);
+                var refreshToken = _jwtService.GenerateRefreshToken();
+                
+                // Update user with refresh token
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
+                await _userService.UpdateAsync(user);
 
-                if (isAjax) return Json(new { success = true });
+                // Set cookies
+                Response.Cookies.Append("X-Access-Token", token);
+                Response.Cookies.Append("X-Refresh-Token", refreshToken);
+
+                if (isAjax) return Json(new { success = true, token = token, refreshToken = refreshToken });
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception)
@@ -121,9 +181,76 @@ namespace BacHa.Controllers
             }
         }
 
-        public IActionResult Logout()
+        [HttpGet]
+        public IActionResult ValidateToken()
         {
+            // This method is used by the frontend to check if the current token is valid
+            // The middleware will handle the actual validation
+            return Json(new { success = true, message = "Token is valid" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RefreshToken()
+        {
+            var refreshToken = Request.Cookies["X-Refresh-Token"];
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return Json(new { success = false, message = "Refresh token not found" });
+            }
+
+            // Find user by refresh token
+            var usersResp = await _userService.GetAllAsync();
+            var users = usersResp.Data ?? new List<User>();
+            var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
+
+            if (user == null || !_jwtService.ValidateRefreshToken(user, refreshToken))
+            {
+                return Json(new { success = false, message = "Invalid refresh token" });
+            }
+
+            try
+            {
+                // Generate new tokens
+                var newToken = _jwtService.GenerateToken(user);
+                var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+                // Update user with new refresh token
+                user.RefreshToken = newRefreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                await _userService.UpdateAsync(user);
+
+                // Set new cookies
+                Response.Cookies.Append("X-Access-Token", newToken);
+                Response.Cookies.Append("X-Refresh-Token", newRefreshToken);
+
+                return Json(new { success = true, token = newToken, refreshToken = newRefreshToken });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error refreshing token" });
+            }
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["X-Refresh-Token"];
+            if (!string.IsNullOrEmpty(refreshToken))
+            {
+                // Find user and clear refresh token
+                var usersResp = await _userService.GetAllAsync();
+                var users = usersResp.Data ?? new List<User>();
+                var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
+                
+                if (user != null)
+                {
+                    user.RefreshToken = null;
+                    user.RefreshTokenExpiryTime = null;
+                    await _userService.UpdateAsync(user);
+                }
+            }
+
             Response.Cookies.Delete("X-Access-Token");
+            Response.Cookies.Delete("X-Refresh-Token");
             return RedirectToAction("Index", "Home");
         }
     }

@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h1>Products Management</h1>
+
+<div class="alert alert-info">
+    <h4>Welcome to Products Management!</h4>
+    <p><strong>Current User:</strong> @ViewBag.Message</p>
+    <p><strong>User Role:</strong> @ViewBag.UserRole</p>
+    <p><strong>User ID:</strong> @ViewContext.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Product Actions</h5>
+            </div>
+            <div class="card-body">
+                <a asp-action="Create" class="btn btn-primary mb-2">Create New Product</a>
+                <br>
+                <a asp-action="Details" asp-route-id="@Guid.NewGuid()" class="btn btn-info">View Product Details</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Authentication Info</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Is Authenticated:</strong> @ViewContext.HttpContext.User.Identity?.IsAuthenticated</p>
+                <p><strong>Authentication Type:</strong> @ViewContext.HttpContext.User.Identity?.AuthenticationType</p>
+                <p><strong>Claims Count:</strong> @ViewContext.HttpContext.User.Claims.Count()</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h5>Available Claims:</h5>
+    <ul class="list-group">
+        @foreach (var claim in ViewContext.HttpContext.User.Claims)
+        {
+            <li class="list-group-item d-flex justify-content-between">
+                <span><strong>@claim.Type:</strong></span>
+                <span>@claim.Value</span>
+            </li>
+        }
+    </ul>
+</div>
+
+<div class="mt-4">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+    <a asp-controller="Auth" asp-action="Logout" class="btn btn-danger">Logout</a>
+</div>

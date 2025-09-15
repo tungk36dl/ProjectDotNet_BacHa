@@ -6,3 +6,51 @@
     <h1 class="display-4">Welcome to Bac Hà</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Authentication</h5>
+            </div>
+            <div class="card-body">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="text-success">✅ You are logged in!</p>
+                    <p><strong>User:</strong> @User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</p>
+                    <p><strong>Email:</strong> @User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value</p>
+                    <p><strong>Role:</strong> @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                    <a asp-controller="Auth" asp-action="Logout" class="btn btn-danger">Logout</a>
+                }
+                else
+                {
+                    <p class="text-warning">⚠️ You are not logged in</p>
+                    <a asp-controller="Auth" asp-action="Login" class="btn btn-primary">Login</a>
+                    <a asp-controller="Auth" asp-action="Register" class="btn btn-secondary">Register</a>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Protected Areas</h5>
+            </div>
+            <div class="card-body">
+                <p>These areas require authentication:</p>
+                <ul class="list-unstyled">
+                    <li><a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary btn-sm mb-1">User Management</a></li>
+                    <li><a asp-controller="Roles" asp-action="Index" class="btn btn-outline-info btn-sm mb-1">Role Management</a></li>
+                    <li><a asp-controller="Products" asp-action="Index" class="btn btn-outline-success btn-sm mb-1">Product Management</a></li>
+                </ul>
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div class="alert alert-info mt-2">
+                        <small>You need to login to access these areas.</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

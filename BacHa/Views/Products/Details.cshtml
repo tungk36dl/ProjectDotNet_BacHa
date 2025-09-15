@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<h1>Product Details</h1>
+
+<div class="alert alert-success">
+    <h5>Access Granted</h5>
+    <p>You have successfully accessed the product details page.</p>
+    <p><strong>Product ID:</strong> @ViewBag.ProductId</p>
+    <p><strong>Current User:</strong> @ViewBag.CurrentUser?.UserName</p>
+    <p><strong>User Role:</strong> @ViewContext.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Product Information</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Product ID:</strong> @ViewBag.ProductId</p>
+        <p><strong>Product Name:</strong> Sample Product</p>
+        <p><strong>Description:</strong> This is a sample product for demonstration purposes.</p>
+        <p><strong>Price:</strong> $99.99</p>
+        <p><strong>Created By:</strong> @ViewBag.CurrentUser?.UserName</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Index" class="btn btn-primary">Back to Products</a>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+</div>

@@ -6,8 +6,13 @@
 
 <h1>Users</h1>
 
+@if(ViewBag.ErrorMessage != null) {
+    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+}
+
 <p>
     <a asp-action="Create" class="btn btn-primary">Create New</a>
+    <a asp-action="Index" class="btn btn-secondary" asp-route-page="1">Refresh</a>
 </p>
 
 <table class="table">
@@ -17,6 +22,7 @@
             <th>UserName</th>
             <th>Email</th>
             <th>FullName</th>
+            <th>Role</th>
             <th>IsActive</th>
             <th></th>
         </tr>
@@ -29,6 +35,20 @@
             <td>@item.UserName</td>
             <td>@item.Email</td>
             <td>@item.FullName</td>
+            <td>
+                @if (item.Role != null)
+                {
+                    <span class="badge bg-primary">@item.Role.Name</span>
+                }
+                else if (!string.IsNullOrEmpty(item.RoleName))
+                {
+                    <span class="badge bg-secondary">@item.RoleName</span>
+                }
+                else
+                {
+                    <span class="text-muted">No Role</span>
+                }
+            </td>
             <td>@item.IsActive</td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
@@ -39,3 +59,21 @@
     }
     </tbody>
 </table>
+
+@{
+    var search = ViewBag.Search as BacHa.Models.Service.UserService.Dto.UserSearch ?? new BacHa.Models.Service.UserService.Dto.UserSearch();
+    var page = search.Page <= 0 ? 1 : search.Page;
+    var pageSize = search.PageSize <= 0 ? 10 : search.PageSize;
+}
+
+<nav>
+    <ul class="pagination">
+        <li class="page-item @(page <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-Page="@(page-1)" asp-route-PageSize="@pageSize">Previous</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link">Page </span></li>
+        <li class="page-item">
+            <a class="page-link" asp-action="Index" asp-route-Page="@(page+1)" asp-route-PageSize="@pageSize">Next</a>
+        </li>
+    </ul>
+</nav>

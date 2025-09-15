@@ -1,76 +1,50 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
+using BacHa.Models.Service;
+using BacHa.Models;
+using BacHa.Models.Entity;
 
 namespace BacHa.Models.UnitOfWork
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly MyDbContext _db;
-        private bool _disposed;
+        private readonly ApplicationDBContext _context;
+        private IDbContextTransaction _transaction;
 
-        public UnitOfWork(MyDbContext db)
+
+        public UnitOfWork(ApplicationDBContext context)
         {
-            _db = db;
+            _context = context;
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
-        public IQueryable<User> Users => _db.Users.AsQueryable();
-
-        public async Task<List<User>> GetAllUsersAsync()
+        public async Task BeginTransactionAsync()
         {
-            return await _db.Users.AsNoTracking().OrderBy(u => u.UserName).ToListAsync();
+            _transaction = await _context.Database.BeginTransactionAsync();
+
         }
 
-        public async Task<User?> GetUserByIdAsync(Guid id)
+        public async Task CommitAsync()
         {
-            return await _db.Users.FindAsync(id);
+            await _transaction.CommitAsync();
+            await _transaction.DisposeAsync();
         }
 
-        public async Task AddUserAsync(User user)
+        public async Task RollbackAsync()
         {
-            _db.Users.Add(user);
-            await SaveChangesAsync();
-        }
-
-        public async Task UpdateUserAsync(User user)
-        {
-            _db.Users.Update(user);
-            await SaveChangesAsync();
-        }
-
-        public async Task DeleteUserAsync(Guid id)
-        {
-            var user = await _db.Users.FindAsync(id);
-            if (user != null)
-            {
-                _db.Users.Remove(user);
-                await SaveChangesAsync();
-            }
-        }
-
-        public async Task<int> SaveChangesAsync()
-        {
-            return await _db.SaveChangesAsync();
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _db.Dispose();
-                }
-            }
-            _disposed = true;
+            await _transaction.RollbackAsync();
+            await _transaction.DisposeAsync();
         }
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            _context.Dispose();
         }
+
+ 
     }
 }

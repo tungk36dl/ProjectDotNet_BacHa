@@ -21,7 +21,15 @@ namespace BacHa.Models
     // Hashed password (store salted+hashed value)
     public string? PasswordHash { get; set; }
 
-    // optional role/claims
-    public string? Role { get; set; }
+    // Foreign key to Role
+    public Guid? RoleId { get; set; }
+    public virtual Role? Role { get; set; }
+
+    // Legacy role field for backward compatibility (will be removed later)
+    public string? RoleName { get; set; }
+
+    // Refresh token for maintaining login session
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 }

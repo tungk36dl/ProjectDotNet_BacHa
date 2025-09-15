@@ -4,19 +4,29 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BacHa.Models.Service.UserService;
+using BacHa.Models.Service.RoleService;
 using BacHa.Models.Service;
+using BacHa.Models.UnitOfWork;
+using BacHa.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<MyDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register UnitOfWork and service for Users
-builder.Services.AddScoped<BacHa.Models.UnitOfWork.IUnitOfWork, BacHa.Models.UnitOfWork.UnitOfWork>();
+// Register UnitOfWork and services
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
+
+// Register User services
 builder.Services.AddScoped<IUserService, UserService>();
+
+// Register Role services
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 // JWT and Auth
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -43,6 +53,9 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
+builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
 
 var app = builder.Build();
 
@@ -62,6 +75,9 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Use custom authentication middleware after authentication
+app.UseAuthenticationMiddleware();
 
 app.MapControllerRoute(
     name: "default",

@@ -56,6 +56,13 @@
 
                 const data = await resp.json();
                 if (data.success) {
+                    // Store tokens in localStorage
+                    if (data.token) {
+                        localStorage.setItem('accessToken', data.token);
+                    }
+                    if (data.refreshToken) {
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                    }
                     window.location.href = '/';
                     return;
                 }
