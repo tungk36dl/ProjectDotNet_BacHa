@@ -9,6 +9,7 @@ using BacHa.Models.Service.RoleService;
 using BacHa.Models.Service;
 using BacHa.Models.UnitOfWork;
 using BacHa.Middleware;
+using BacHa.HelperServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
 builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
 
+// Register DataSeedService
+builder.Services.AddScoped<IDataSeedService, DataSeedService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -78,6 +82,13 @@ app.UseAuthorization();
 
 // Use custom authentication middleware after authentication
 app.UseAuthenticationMiddleware();
+
+// Seed default admin user
+using (var scope = app.Services.CreateScope())
+{
+    var dataSeedService = scope.ServiceProvider.GetRequiredService<IDataSeedService>();
+    await dataSeedService.SeedDefaultAdminUserAsync();
+}
 
 app.MapControllerRoute(
     name: "default",

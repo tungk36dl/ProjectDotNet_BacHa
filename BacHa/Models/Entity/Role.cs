@@ -18,3 +18,4 @@ namespace BacHa.Models
         public virtual ICollection<User> Users { get; set; } = new List<User>();
     }
 }
+

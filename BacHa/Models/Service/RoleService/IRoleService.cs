@@ -14,3 +14,4 @@ namespace BacHa.Models.Service.RoleService
         Task<DataResponse<bool>> IsNameExistsAsync(string name, Guid? excludeId = null);
     }
 }
+

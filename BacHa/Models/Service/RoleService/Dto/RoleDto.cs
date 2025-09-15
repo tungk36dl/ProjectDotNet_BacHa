@@ -21,3 +21,4 @@ namespace BacHa.Models.Service.RoleService.Dto
         public int UserCount { get; set; }
     }
 }
+

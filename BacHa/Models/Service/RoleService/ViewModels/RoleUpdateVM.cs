@@ -19,3 +19,4 @@ namespace BacHa.Models.Service.RoleService.ViewModels
         public bool IsActive { get; set; } = true;
     }
 }
+

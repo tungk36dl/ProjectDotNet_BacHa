@@ -8,3 +8,4 @@ namespace BacHa.Models.Service.RoleService.Dto
         public bool? IsActive { get; set; }
     }
 }
+
