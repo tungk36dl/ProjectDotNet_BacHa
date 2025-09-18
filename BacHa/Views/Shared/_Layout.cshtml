@@ -37,17 +37,22 @@
                         </li>
                     </ul>
 
-                    @{ var token = Context.Request.Cookies["X-Access-Token"]; }
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li class="nav-item" id="loginNav" style="display: none;">
-                            <a class="nav-link" asp-controller="Auth" asp-action="Login">Login</a>
-                        </li>
-                        <li class="nav-item" id="registerNav" style="display: none;">
-                            <a class="nav-link" asp-controller="Auth" asp-action="Register">Register</a>
-                        </li>
-                        <li class="nav-item" id="logoutNav" style="display: none;">
-                            <a class="nav-link" asp-controller="Auth" asp-action="Logout">Logout</a>
-                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="window.AuthManager.logout(); return false;">Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Register">Register</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
@@ -68,33 +73,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/auth.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        // Update navigation based on authentication status
-        document.addEventListener('DOMContentLoaded', function() {
-            function updateNavigation() {
-                const isAuthenticated = window.AuthManager && window.AuthManager.isAuthenticated();
-                const loginNav = document.getElementById('loginNav');
-                const registerNav = document.getElementById('registerNav');
-                const logoutNav = document.getElementById('logoutNav');
-                
-                if (isAuthenticated) {
-                    if (loginNav) loginNav.style.display = 'none';
-                    if (registerNav) registerNav.style.display = 'none';
-                    if (logoutNav) logoutNav.style.display = 'block';
-                } else {
-                    if (loginNav) loginNav.style.display = 'block';
-                    if (registerNav) registerNav.style.display = 'block';
-                    if (logoutNav) logoutNav.style.display = 'none';
-                }
-            }
-            
-            // Initial update
-            updateNavigation();
-            
-            // Update when auth status changes
-            setInterval(updateNavigation, 1000);
-        });
-    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

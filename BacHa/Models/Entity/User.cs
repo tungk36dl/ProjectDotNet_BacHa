@@ -27,9 +27,5 @@ namespace BacHa.Models
 
     // Legacy role field for backward compatibility (will be removed later)
     public string? RoleName { get; set; }
-
-    // Refresh token for maintaining login session
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 }

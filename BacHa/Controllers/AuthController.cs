@@ -1,25 +1,26 @@
 using BacHa.Models;
-using BacHa.Services;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 using System;
+using System.Linq;
 using BacHa.Models.Service;
 using BacHa.Models.Service.UserService;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace BacHa.Controllers
 {
     public class AuthController : Controller
     {
         private readonly IUserService _userService;
-        private readonly IJwtService _jwtService;
         private readonly PasswordHasher<User> _passwordHasher;
 
-        public AuthController(IUserService userService, IJwtService jwtService)
+        public AuthController(IUserService userService)
         {
             _userService = userService;
-            _jwtService = jwtService;
             _passwordHasher = new PasswordHasher<User>();
         }
 
@@ -46,19 +47,26 @@ namespace BacHa.Controllers
             {
                 if (op.Success)
                 {
-                    var token = _jwtService.GenerateToken(model);
-                    var refreshToken = _jwtService.GenerateRefreshToken();
+                    // Create authentication claims
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, model.Id.ToString()),
+                        new Claim(ClaimTypes.Name, model.UserName ?? string.Empty),
+                        new Claim(ClaimTypes.Email, model.Email ?? string.Empty),
+                        new Claim(ClaimTypes.Role, model.Role?.Name ?? model.RoleName ?? "User")
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    };
+
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
+                        new ClaimsPrincipal(claimsIdentity), authProperties);
                     
-                    // Update user with refresh token
-                    model.RefreshToken = refreshToken;
-                    model.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-                    await _userService.UpdateAsync(model);
-                    
-                    // Set cookies
-                    Response.Cookies.Append("X-Access-Token", token);
-                    Response.Cookies.Append("X-Refresh-Token", refreshToken);
-                    
-                    return Json(new { success = true, token = token, refreshToken = refreshToken });
+                    return Json(new { success = true, message = "Registration successful" });
                 }
 
                 // try parse field errors from ErrorDetails
@@ -77,17 +85,24 @@ namespace BacHa.Controllers
 
             if (op.Success)
             {
-                var token = _jwtService.GenerateToken(model);
-                var refreshToken = _jwtService.GenerateRefreshToken();
-                
-                // Update user with refresh token
-                model.RefreshToken = refreshToken;
-                model.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-                await _userService.UpdateAsync(model);
-                
-                // Set cookies
-                Response.Cookies.Append("X-Access-Token", token);
-                Response.Cookies.Append("X-Refresh-Token", refreshToken);
+                // Create authentication claims
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, model.Id.ToString()),
+                    new Claim(ClaimTypes.Name, model.UserName ?? string.Empty),
+                    new Claim(ClaimTypes.Email, model.Email ?? string.Empty),
+                    new Claim(ClaimTypes.Role, model.Role?.Name ?? model.RoleName ?? "User")
+                };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
+                    new ClaimsPrincipal(claimsIdentity), authProperties);
                 
                 return RedirectToAction("Index", "Home");
             }
@@ -122,29 +137,49 @@ namespace BacHa.Controllers
         public IActionResult Login() => View();
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        // [ValidateAntiForgeryToken] // Temporarily disabled for debugging
         public async Task<IActionResult> Login(string usernameOrEmail, string password)
         {
+            Console.WriteLine($"Login attempt - UsernameOrEmail: '{usernameOrEmail}', Password: '{password}'");
+            
             if (string.IsNullOrWhiteSpace(usernameOrEmail) || string.IsNullOrWhiteSpace(password))
             {
+                Console.WriteLine("Username or password is empty");
                 ModelState.AddModelError(string.Empty, "Username and password required");
+                if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Username and password required" });
+                }
                 return View();
             }
 
             // find user by username or email
+            Console.WriteLine("Getting all users from database...");
             var usersResp = await _userService.GetAllAsync();
             var users = usersResp.Data ?? new List<User>();
+            Console.WriteLine($"Found {users.Count} users in database");
+            
+            foreach (var u in users)
+            {
+                Console.WriteLine($"User: {u.UserName}, Email: {u.Email}, IsActive: {u.IsActive}");
+            }
+            
             var user = users.Find(u => string.Equals(u.UserName, usernameOrEmail, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(u.Email, usernameOrEmail, StringComparison.OrdinalIgnoreCase));
 
             var isAjax = Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            Console.WriteLine($"Login request - isAjax: {isAjax}");
+            Console.WriteLine($"Request headers: {string.Join(", ", Request.Headers.Select(h => $"{h.Key}={h.Value}"))}");
 
             if (user == null)
             {
+                Console.WriteLine($"User not found for username/email: {usernameOrEmail}");
                 if (isAjax) return Json(new { success = false, message = "Invalid credentials" });
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
                 return View();
             }
+            
+            Console.WriteLine($"User found: {user.UserName}, IsActive: {user.IsActive}");
 
             var verify = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash ?? string.Empty, password);
             if (verify == PasswordVerificationResult.Failed)
@@ -156,20 +191,30 @@ namespace BacHa.Controllers
 
             try
             {
-                // Generate tokens
-                var token = _jwtService.GenerateToken(user);
-                var refreshToken = _jwtService.GenerateRefreshToken();
-                
-                // Update user with refresh token
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 days expiry
-                await _userService.UpdateAsync(user);
+                // Create authentication claims
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                    new Claim(ClaimTypes.Role, user.Role?.Name ?? user.RoleName ?? "User")
+                };
 
-                // Set cookies
-                Response.Cookies.Append("X-Access-Token", token);
-                Response.Cookies.Append("X-Refresh-Token", refreshToken);
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
 
-                if (isAjax) return Json(new { success = true, token = token, refreshToken = refreshToken });
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
+                    new ClaimsPrincipal(claimsIdentity), authProperties);
+
+                if (isAjax) 
+                {
+                    Console.WriteLine($"AJAX Login successful for user: {user.UserName}");
+                    return Json(new { success = true, message = "Login successful" });
+                }
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception)
@@ -182,75 +227,28 @@ namespace BacHa.Controllers
         }
 
         [HttpGet]
-        public IActionResult ValidateToken()
+        public IActionResult ValidateSession()
         {
-            // This method is used by the frontend to check if the current token is valid
-            // The middleware will handle the actual validation
-            return Json(new { success = true, message = "Token is valid" });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> RefreshToken()
-        {
-            var refreshToken = Request.Cookies["X-Refresh-Token"];
-            if (string.IsNullOrEmpty(refreshToken))
+            // Check if user is authenticated via session
+            if (User.Identity?.IsAuthenticated == true)
             {
-                return Json(new { success = false, message = "Refresh token not found" });
+                return Json(new { 
+                    success = true, 
+                    message = "Session is valid",
+                    user = new {
+                        id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        name = User.FindFirst(ClaimTypes.Name)?.Value,
+                        email = User.FindFirst(ClaimTypes.Email)?.Value,
+                        role = User.FindFirst(ClaimTypes.Role)?.Value
+                    }
+                });
             }
-
-            // Find user by refresh token
-            var usersResp = await _userService.GetAllAsync();
-            var users = usersResp.Data ?? new List<User>();
-            var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
-
-            if (user == null || !_jwtService.ValidateRefreshToken(user, refreshToken))
-            {
-                return Json(new { success = false, message = "Invalid refresh token" });
-            }
-
-            try
-            {
-                // Generate new tokens
-                var newToken = _jwtService.GenerateToken(user);
-                var newRefreshToken = _jwtService.GenerateRefreshToken();
-
-                // Update user with new refresh token
-                user.RefreshToken = newRefreshToken;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-                await _userService.UpdateAsync(user);
-
-                // Set new cookies
-                Response.Cookies.Append("X-Access-Token", newToken);
-                Response.Cookies.Append("X-Refresh-Token", newRefreshToken);
-
-                return Json(new { success = true, token = newToken, refreshToken = newRefreshToken });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Error refreshing token" });
-            }
+            return Json(new { success = false, message = "Session is invalid" });
         }
 
         public async Task<IActionResult> Logout()
         {
-            var refreshToken = Request.Cookies["X-Refresh-Token"];
-            if (!string.IsNullOrEmpty(refreshToken))
-            {
-                // Find user and clear refresh token
-                var usersResp = await _userService.GetAllAsync();
-                var users = usersResp.Data ?? new List<User>();
-                var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
-                
-                if (user != null)
-                {
-                    user.RefreshToken = null;
-                    user.RefreshTokenExpiryTime = null;
-                    await _userService.UpdateAsync(user);
-                }
-            }
-
-            Response.Cookies.Delete("X-Access-Token");
-            Response.Cookies.Delete("X-Refresh-Token");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
         }
     }

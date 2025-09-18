@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
 using BacHa.Models;
 using BacHa.Models.Service;
@@ -8,7 +7,7 @@ using BacHa.Helper;
 
 namespace BacHa.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     public abstract class BaseController : Controller
     {
         protected User? CurrentUser

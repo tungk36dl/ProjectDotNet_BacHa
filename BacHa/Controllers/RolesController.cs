@@ -8,9 +8,11 @@ using BacHa.Helper;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BacHa.Controllers
 {
+    [Authorize]
     public class RolesController : BaseController
     {
         private readonly IRoleService _roleService;

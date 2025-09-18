@@ -4,9 +4,11 @@ using BacHa.Models.Service;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BacHa.Controllers
 {
+    [Authorize]
     public class ProductsController : BaseController
     {
         private readonly ILogger<ProductsController> _logger;

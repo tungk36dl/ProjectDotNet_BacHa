@@ -7,9 +7,11 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BacHa.Controllers
 {
+    [Authorize]
     public class UsersController : BaseController
     {
         private readonly IUserService _userService;

@@ -8,7 +8,7 @@
             <div class="card-body">
                 <h4 class="card-title mb-3">Login</h4>
 
-                <form asp-action="Login" method="post">
+                <form id="loginForm" asp-action="Login" method="post">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
@@ -36,34 +36,83 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function(){
-            const form = document.querySelector('form[asp-action="Login"]');
-            if (!form) return;
+            const form = document.getElementById('loginForm');
+            if (!form) {
+                console.error('Login form not found!');
+                return;
+            }
+            console.log('Login form found, setting up event listener...');
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+                console.log('Form submitted, preparing AJAX request...');
+                
                 document.querySelectorAll('.text-danger._ajax').forEach(n => n.remove());
                 document.querySelectorAll('[data-ajax-summary]').forEach(n => n.textContent = '');
 
                 const formData = new FormData(form);
                 const body = new URLSearchParams();
-                for (const pair of formData.entries()) body.append(pair[0], pair[1]);
+                for (const pair of formData.entries()) {
+                    body.append(pair[0], pair[1]);
+                    console.log(`Form field: ${pair[0]} = ${pair[1]}`);
+                }
+
+                console.log('Sending request to:', form.action);
+                console.log('Request body:', body.toString());
 
                 const resp = await fetch(form.action, {
                     method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest', 
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
                     body: body.toString()
                 });
 
-                const data = await resp.json();
+                console.log('Response status:', resp.status);
+                console.log('Response headers:', resp.headers);
+                
+                if (!resp.ok) {
+                    console.error('Request failed with status:', resp.status);
+                    const errorText = await resp.text();
+                    console.error('Error response:', errorText);
+                    
+                    // Try to parse as JSON first
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        console.error('Parsed error data:', errorData);
+                        if (errorData.message) {
+                            alert('Login failed: ' + errorData.message);
+                        } else {
+                            alert('Login failed: ' + resp.status + ' ' + resp.statusText);
+                        }
+                    } catch (parseError) {
+                        console.error('Could not parse error as JSON:', parseError);
+                        console.error('Raw error response:', errorText);
+                        alert('Login failed: ' + resp.status + ' ' + resp.statusText + '\n\nError details: ' + errorText.substring(0, 200));
+                    }
+                    return;
+                }
+                
+                let data;
+                try {
+                    data = await resp.json();
+                    console.log('Response data:', data);
+                } catch (error) {
+                    console.error('Failed to parse JSON response:', error);
+                    const responseText = await resp.text();
+                    console.error('Response text:', responseText);
+                    alert('Invalid response from server');
+                    return;
+                }
+                
                 if (data.success) {
-                    // Store tokens in localStorage
-                    if (data.token) {
-                        localStorage.setItem('accessToken', data.token);
-                    }
-                    if (data.refreshToken) {
-                        localStorage.setItem('refreshToken', data.refreshToken);
-                    }
-                    window.location.href = '/';
+                    console.log('Login successful, session created...');
+                    // Session is automatically managed by server-side cookies
+                    console.log('Authentication session created by server');
+                    
+                    window.location.href = '/Home/Index';
                     return;
                 }
 
