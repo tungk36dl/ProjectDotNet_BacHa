@@ -4,7 +4,10 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome to Bac Hà</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <p class="lead">Khám phá những sản phẩm tuyệt vời tại cửa hàng của chúng tôi</p>
+    <a asp-controller="Products" asp-action="Shop" class="btn btn-primary btn-lg">
+        <i class="fas fa-store me-2"></i>Khám phá cửa hàng
+    </a>
 </div>
 
 <div class="row mt-4">
@@ -43,6 +46,7 @@
                     <li><a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary btn-sm mb-1">User Management</a></li>
                     <li><a asp-controller="Roles" asp-action="Index" class="btn btn-outline-info btn-sm mb-1">Role Management</a></li>
                     <li><a asp-controller="Products" asp-action="Index" class="btn btn-outline-success btn-sm mb-1">Product Management</a></li>
+                    <li><a asp-controller="Categories" asp-action="Index" class="btn btn-outline-warning btn-sm mb-1">Category Management</a></li>
                 </ul>
                 @if (User.Identity?.IsAuthenticated != true)
                 {

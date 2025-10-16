@@ -1,0 +1,96 @@
+@model BacHa.Models.Service.CategoryService.ViewModels.CategoryUpdateVM
+
+@{
+    ViewData["Title"] = "Sửa Thể loại";
+}
+
+<h1>Sửa Thể loại</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input asp-for="Id" type="hidden" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="form-label">Tên thể loại *</label>
+                <input asp-for="Name" class="form-control" placeholder="Nhập tên thể loại" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="form-label">Mô tả</label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Nhập mô tả thể loại (tùy chọn)"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ParentId" class="form-label">Thể loại cha</label>
+                <select asp-for="ParentId" class="form-select">
+                    <option value="">-- Chọn thể loại cha (tùy chọn) --</option>
+                    @if (ViewBag.ParentCategories != null)
+                    {
+                        @foreach (var category in ViewBag.ParentCategories)
+                        {
+                            <option value="@category.Id" selected="@(category.Id == Model.ParentId)">@category.Name</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ParentId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label">Kích hoạt</label>
+                </div>
+                <span asp-validation-for="IsActive" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật Thể loại
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại Danh sách
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Thông tin Thể loại</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Tên thể loại:</strong> Phải là duy nhất và mô tả rõ ràng.</p>
+                <p><strong>Mô tả:</strong> Trường tùy chọn để mô tả mục đích của thể loại.</p>
+                <p><strong>Thể loại cha:</strong> Tùy chọn để tạo cấu trúc phân cấp.</p>
+                <p><strong>Trạng thái:</strong> Thể loại hoạt động có thể được sử dụng cho sản phẩm.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Real-time name validation
+        $('#Name').on('blur', function() {
+            var name = $(this).val();
+            if (name.length > 0) {
+                $.get('@Url.Action("CheckNameExists", "Categories")', { name: name, excludeId: '@Model.Id' }, function(data) {
+                    if (data.exists) {
+                        $('#Name').addClass('is-invalid');
+                        if ($('#name-error').length === 0) {
+                            $('#Name').after('<div id="name-error" class="invalid-feedback">Tên thể loại đã tồn tại.</div>');
+                        }
+                    } else {
+                        $('#Name').removeClass('is-invalid');
+                        $('#name-error').remove();
+                    }
+                });
+            }
+        });
+    </script>
+}

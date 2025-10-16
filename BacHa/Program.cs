@@ -2,6 +2,8 @@ using BacHa.Models;
 using Microsoft.EntityFrameworkCore;
 using BacHa.Models.Service.UserService;
 using BacHa.Models.Service.RoleService;
+using BacHa.Models.Service.CategoryService;
+using BacHa.Models.Service.ProductService;
 using BacHa.Models.Service;
 using BacHa.Models.UnitOfWork;
 using BacHa.HelperServices;
@@ -24,6 +26,12 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 // Register Role services
 builder.Services.AddScoped<IRoleService, RoleService>();
+
+// Register Category services
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+// Register Product services
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // Session Authentication
 builder.Services.AddAuthentication("Cookies")

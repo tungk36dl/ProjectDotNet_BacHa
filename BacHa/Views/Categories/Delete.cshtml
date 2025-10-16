@@ -1,0 +1,107 @@
+@model BacHa.Models.Entity.Category
+
+@{
+    ViewData["Title"] = "Xóa Thể loại";
+}
+
+<h1>Xóa Thể loại</h1>
+
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading">Cảnh báo!</h4>
+    <p>Bạn có chắc chắn muốn xóa thể loại này không? Hành động này không thể hoàn tác.</p>
+    <hr>
+    <p class="mb-0">Nếu thể loại này có thể loại con hoặc sản phẩm, việc xóa sẽ bị từ chối.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Thông tin Thể loại sẽ bị xóa</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Tên thể loại:</dt>
+                    <dd class="col-sm-9">
+                        <strong>@Model.Name</strong>
+                    </dd>
+
+                    <dt class="col-sm-3">Mô tả:</dt>
+                    <dd class="col-sm-9">@(Model.Description ?? "-")</dd>
+
+                    <dt class="col-sm-3">Thể loại cha:</dt>
+                    <dd class="col-sm-9">@(Model.Parent?.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Trạng thái:</dt>
+                    <dd class="col-sm-9">
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Không hoạt động</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3">Ngày tạo:</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+
+                    <dt class="col-sm-3">Ngày cập nhật:</dt>
+                    <dd class="col-sm-9">@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Xác nhận Xóa</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Xác nhận Xóa
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Hủy bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.Children.Any())
+        {
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Thể loại con</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-danger">Thể loại này có @Model.Children.Count thể loại con. Không thể xóa.</p>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var child in Model.Children)
+                        {
+                            <li class="list-group-item">
+                                <a asp-action="Details" asp-route-id="@child.Id" class="text-decoration-none">
+                                    @child.Name
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}

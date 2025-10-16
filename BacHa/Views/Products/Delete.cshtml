@@ -1,16 +1,24 @@
+@using BacHa.Helper
 @model BacHa.Models.Entity.Product
 
 @{
-    ViewData["Title"] = "Chi tiết Sản phẩm";
+    ViewData["Title"] = "Xóa Sản phẩm";
 }
 
-<h1>Chi tiết Sản phẩm</h1>
+<h1>Xóa Sản phẩm</h1>
+
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading">Cảnh báo!</h4>
+    <p>Bạn có chắc chắn muốn xóa sản phẩm này không? Hành động này không thể hoàn tác.</p>
+    <hr>
+    <p class="mb-0">Tất cả thông tin liên quan đến sản phẩm này sẽ bị xóa vĩnh viễn.</p>
+</div>
 
 <div class="row">
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h5>Thông tin Sản phẩm</h5>
+                <h5>Thông tin Sản phẩm sẽ bị xóa</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -32,18 +40,18 @@
 
                             <dt class="col-sm-4">Giá:</dt>
                             <dd class="col-sm-8">
-                                <span class="text-success fs-5">@Html.FormatVNDForProduct(Model.Price)</span>
+                                <span class="text-success">@Html.FormatVNDForProduct(Model.Price)</span>
                             </dd>
 
                             <dt class="col-sm-4">Tồn kho:</dt>
                             <dd class="col-sm-8">
                                 @if (Model.Stock > 0)
                                 {
-                                    <span class="badge bg-success fs-6">@Model.Stock sản phẩm</span>
+                                    <span class="badge bg-success">@Model.Stock sản phẩm</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger fs-6">Hết hàng</span>
+                                    <span class="badge bg-danger">Hết hàng</span>
                                 }
                             </dd>
 
@@ -61,9 +69,6 @@
 
                             <dt class="col-sm-4">Ngày tạo:</dt>
                             <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
-
-                            <dt class="col-sm-4">Ngày cập nhật:</dt>
-                            <dd class="col-sm-8">@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</dd>
                         </dl>
                     </div>
                 </div>
@@ -73,41 +78,35 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5>Thao tác</h5>
+                <h5>Xác nhận Xóa</h5>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-                        <i class="fas fa-edit"></i> Sửa Sản phẩm
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Xóa Sản phẩm
-                    </a>
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Quay lại Danh sách
-                    </a>
-                </div>
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Xác nhận Xóa
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Hủy bỏ
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
 
-        @if (Model.Category != null)
-        {
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5>Thông tin Thể loại</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Tên thể loại:</strong> @Model.Category.Name</p>
-                    @if (!string.IsNullOrEmpty(Model.Category.Description))
-                    {
-                        <p><strong>Mô tả:</strong> @Model.Category.Description</p>
-                    }
-                    <a asp-controller="Categories" asp-action="Details" asp-route-id="@Model.Category.Id" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-eye"></i> Xem chi tiết thể loại
-                    </a>
-                </div>
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Lưu ý</h5>
             </div>
-        }
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-exclamation-triangle text-warning"></i> Hành động này không thể hoàn tác</li>
+                    <li><i class="fas fa-database text-info"></i> Dữ liệu sẽ bị xóa vĩnh viễn</li>
+                    <li><i class="fas fa-link text-danger"></i> Các liên kết đến sản phẩm này sẽ bị hỏng</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 

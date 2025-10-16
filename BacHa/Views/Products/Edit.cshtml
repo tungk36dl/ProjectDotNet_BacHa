@@ -1,15 +1,16 @@
-@model BacHa.Models.Service.ProductService.ViewModels.ProductCreateVM
+@model BacHa.Models.Service.ProductService.ViewModels.ProductUpdateVM
 
 @{
-    ViewData["Title"] = "Tạo Sản phẩm Mới";
+    ViewData["Title"] = "Sửa Sản phẩm";
 }
 
-<h1>Tạo Sản phẩm Mới</h1>
+<h1>Sửa Sản phẩm</h1>
 
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Create" method="post">
+        <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input asp-for="Id" type="hidden" />
 
             <div class="form-group mb-3">
                 <label asp-for="Name" class="form-label">Tên sản phẩm *</label>
@@ -51,7 +52,7 @@
                     {
                         @foreach (var category in ViewBag.Categories)
                         {
-                            <option value="@category.Id">@category.Name</option>
+                            <option value="@category.Id" selected="@(category.Id == Model.CategoryId)">@category.Name</option>
                         }
                     }
                 </select>
@@ -75,7 +76,7 @@
 
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Tạo Sản phẩm
+                    <i class="fas fa-save"></i> Cập nhật Sản phẩm
                 </button>
                 <a asp-action="Index" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Quay lại Danh sách
@@ -108,7 +109,7 @@
         $('#Name').on('blur', function() {
             var name = $(this).val();
             if (name.length > 0) {
-                $.get('@Url.Action("CheckNameExists", "Products")', { name: name }, function(data) {
+                $.get('@Url.Action("CheckNameExists", "Products")', { name: name, excludeId: '@Model.Id' }, function(data) {
                     if (data.exists) {
                         $('#Name').addClass('is-invalid');
                         if ($('#name-error').length === 0) {
