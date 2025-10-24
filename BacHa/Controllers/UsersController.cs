@@ -2,12 +2,14 @@
 using BacHa.Models;
 using BacHa.Models.Service;
 using BacHa.Models.Service.RoleService;
+using BacHa.Models.Service.UserService.ViewModels;
 using BacHa.Helper;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace BacHa.Controllers
 {
@@ -16,11 +18,13 @@ namespace BacHa.Controllers
     {
         private readonly IUserService _userService;
         private readonly IRoleService _roleService;
+        private readonly PasswordHasher<User> _passwordHasher;
 
         public UsersController(IUserService userService, IRoleService roleService)
         {
             _userService = userService;
             _roleService = roleService;
+            _passwordHasher = new PasswordHasher<User>();
         }
         public async Task<IActionResult> Index([FromQuery] Models.Service.UserService.Dto.UserSearch? search)
         {
@@ -41,24 +45,47 @@ namespace BacHa.Controllers
             if (!resp.Success || resp.Data == null) return NotFound();
             return View(resp.Data);
         }
-
         public async Task<IActionResult> Create()
         {
             await LoadRolesAsync();
-            return View();
+            return View(new UserCreateVM());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(User user)
+        public async Task<IActionResult> Create(UserCreateVM model)
         {
-            if (!ModelState.IsValid) return View(user);
+            if (!ModelState.IsValid)
+            {
+                await LoadRolesAsync();
+                return View(model);
+            }
+
+            // Convert ViewModel to User entity
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = model.UserName,
+                Email = model.Email,
+                FullName = model.FullName,
+                IsActive = model.IsActive,
+                RoleName = model.Role,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Hash password
+            if (!string.IsNullOrWhiteSpace(model.Password))
+            {
+                user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
+            }
 
             var result = await _userService.AddAsync(user);
             if (!result.Success)
             {
                 ModelState.AddDataResponse(new DataResponse<object> { Success = result.Success, Message = result.Message, ErrorDetails = result.ErrorDetails });
-                return View(user);
+                await LoadRolesAsync();
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
@@ -113,11 +140,11 @@ namespace BacHa.Controllers
             var rolesResp = await _roleService.GetAllAsync();
             if (rolesResp.Success && rolesResp.Data != null)
             {
-                ViewBag.Roles = new SelectList(rolesResp.Data.Where(r => r.IsActive), "Id", "Name");
+                ViewBag.Roles = new SelectList(rolesResp.Data.Where(r => r.IsActive), "Name", "Name");
             }
             else
             {
-                ViewBag.Roles = new SelectList(new List<Role>(), "Id", "Name");
+                ViewBag.Roles = new SelectList(new List<Role>(), "Name", "Name");
             }
         }
     }

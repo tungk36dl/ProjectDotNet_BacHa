@@ -1,0 +1,208 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                </h1>
+                <div class="text-muted">
+                    <i class="fas fa-user-shield me-1"></i>
+                    Chào mừng, @User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Quick Stats Cards -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tổng Sản phẩm
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng Người dùng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Doanh thu
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Đơn hàng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Actions -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cogs me-2"></i>Quản lý Hệ thống
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-block">
+                                <i class="fas fa-box me-2"></i>Quản lý Sản phẩm
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="Users" asp-action="Index" class="btn btn-success btn-block">
+                                <i class="fas fa-users me-2"></i>Quản lý Người dùng
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="Categories" asp-action="Index" class="btn btn-info btn-block">
+                                <i class="fas fa-tags me-2"></i>Quản lý Danh mục
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a asp-controller="Roles" asp-action="Index" class="btn btn-warning btn-block">
+                                <i class="fas fa-user-tag me-2"></i>Quản lý Vai trò
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Báo cáo & Thống kê
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-danger btn-block" onclick="alert('Chức năng báo cáo doanh thu đang phát triển')">
+                                <i class="fas fa-chart-line me-2"></i>Báo cáo Doanh thu
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-secondary btn-block" onclick="alert('Chức năng thống kê đang phát triển')">
+                                <i class="fas fa-chart-pie me-2"></i>Thống kê Tổng quan
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-dark btn-block" onclick="alert('Chức năng báo cáo người dùng đang phát triển')">
+                                <i class="fas fa-user-chart me-2"></i>Báo cáo Người dùng
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-outline-primary btn-block" onclick="alert('Chức năng xuất dữ liệu đang phát triển')">
+                                <i class="fas fa-download me-2"></i>Xuất Dữ liệu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history me-2"></i>Hoạt động Gần đây
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Chức năng theo dõi hoạt động đang được phát triển
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .text-xs {
+        font-size: 0.7rem;
+    }
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+</style>

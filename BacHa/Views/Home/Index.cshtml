@@ -8,6 +8,16 @@
     <a asp-controller="Products" asp-action="Shop" class="btn btn-primary btn-lg">
         <i class="fas fa-store me-2"></i>Khám phá cửa hàng
     </a>
+    
+    @* Nút báo cáo chỉ dành cho Admin *@
+    @if (User.Identity?.IsAuthenticated == true && User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Admin")
+    {
+        <div class="mt-3">
+            <button class="btn btn-danger btn-lg" onclick="alert('Chức năng báo cáo doanh thu đang phát triển')">
+                <i class="fas fa-chart-line me-2"></i>Xem Báo cáo Doanh thu
+            </button>
+        </div>
+    }
 </div>
 
 <div class="row mt-4">
@@ -35,7 +45,7 @@
         </div>
     </div>
     
-    <div class="col-md-6">
+    @* <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h5>Protected Areas</h5>
@@ -56,5 +66,5 @@
                 }
             </div>
         </div>
-    </div>
+    </div> *@
 </div>

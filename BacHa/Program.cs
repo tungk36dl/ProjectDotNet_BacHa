@@ -32,6 +32,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Register Product services
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddHttpContextAccessor();
 
 // Session Authentication
 builder.Services.AddAuthentication("Cookies")

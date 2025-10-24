@@ -46,6 +46,14 @@
                         }
                     </div>
 
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" />
+                        <div id="passwordMatchError" class="text-danger mt-1" style="display: none;">
+                            Passwords do not match
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between align-items-center">
                         <button type="submit" class="btn btn-primary">Register</button>
                         <a asp-action="Login" class="btn btn-link">Login</a>
@@ -58,13 +66,108 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <style>
+        .form-control.is-valid {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .form-control.is-valid:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .form-control.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        #passwordMatchError {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
     <script>
         (function(){
             const form = document.querySelector('form[asp-action="Register"]');
             if (!form) return;
 
+            // Real-time password validation
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const passwordMatchError = document.getElementById('passwordMatchError');
+
+            function validatePasswordMatch() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                // Clear previous error styling
+                confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
+                passwordMatchError.style.display = 'none';
+                
+                // Only validate if both fields have content
+                if (password && confirmPassword) {
+                    if (password !== confirmPassword) {
+                        confirmPasswordInput.classList.add('is-invalid');
+                        passwordMatchError.style.display = 'block';
+                        passwordMatchError.textContent = 'Passwords do not match';
+                        return false;
+                    } else {
+                        confirmPasswordInput.classList.add('is-valid');
+                        passwordMatchError.style.display = 'none';
+                        return true;
+                    }
+                } else if (confirmPassword && !password) {
+                    // If confirm password has content but password is empty
+                    confirmPasswordInput.classList.add('is-invalid');
+                    passwordMatchError.style.display = 'block';
+                    passwordMatchError.textContent = 'Please enter password first';
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // Add visual feedback for password strength
+            function validatePasswordStrength() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                passwordInput.classList.remove('is-invalid', 'is-valid');
+                
+                if (password) {
+                    if (password.length < 6) {
+                        passwordInput.classList.add('is-invalid');
+                    } else {
+                        passwordInput.classList.add('is-valid');
+                    }
+                }
+                
+                // Re-validate confirm password when password changes
+                if (confirmPassword) {
+                    validatePasswordMatch();
+                }
+            }
+
+            // Event listeners for real-time validation
+            passwordInput.addEventListener('input', validatePasswordStrength);
+            confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+            
+            // Also validate on blur (when user leaves the field)
+            confirmPasswordInput.addEventListener('blur', validatePasswordMatch);
+
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+
+                // Validate password match before submitting
+                if (!validatePasswordMatch()) {
+                    return;
+                }
 
                 // clear previous errors
                 document.querySelectorAll('.text-danger._ajax').forEach(n => n.remove());

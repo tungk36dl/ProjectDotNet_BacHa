@@ -215,7 +215,19 @@ namespace BacHa.Controllers
                     Console.WriteLine($"AJAX Login successful for user: {user.UserName}");
                     return Json(new { success = true, message = "Login successful" });
                 }
-                return RedirectToAction("Index", "Home");
+                var userRole = user.Role?.Name ?? user.RoleName ?? "User";
+                if (userRole == "Admin")
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+                else if (userRole == "NhanVien")
+                {
+                    return RedirectToAction("Index", "NhanVien");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Home");
+                }
             }
             catch (Exception)
             {

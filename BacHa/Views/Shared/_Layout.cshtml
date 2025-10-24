@@ -21,29 +21,84 @@
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Users" asp-action="Index">Users</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Roles" asp-action="Index">Roles</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Categories" asp-action="Index">Categories</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Index">Products</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Shop">
-                                <i class="fas fa-store me-1"></i>Cửa hàng
-                            </a>
-                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                            
+                            @* Admin Menu *@
+                            @if (userRole == "Admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Index">
+                                        <i class="fas fa-box me-1"></i>Quản lý Sản phẩm
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Users" asp-action="Index">
+                                        <i class="fas fa-users me-1"></i>Quản lý Người dùng
+                                    </a>
+                                </li>
+                            }
+                            @* NhanVien Menu *@
+                            else if (userRole == "NhanVien")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Index">
+                                        <i class="fas fa-box me-1"></i>Quản lý Sản phẩm
+                                    </a>
+                                </li>
+                            }
+                            @* KhachHang Menu *@
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                        <i class="fas fa-home me-1"></i>Trang chủ
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#" onclick="alert('Chức năng giỏ hàng đang phát triển'); return false;">
+                                        <i class="fas fa-shopping-cart me-1"></i>Giỏ hàng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#" onclick="alert('Chức năng hồ sơ đang phát triển'); return false;">
+                                        <i class="fas fa-user me-1"></i>Hồ sơ của tôi
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Shop">
+                                        <i class="fas fa-store me-1"></i>Cửa hàng
+                                    </a>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            @* Default menu for non-authenticated users *@
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Shop">
+                                    <i class="fas fa-store me-1"></i>Cửa hàng
+                                </a>
+                            </li>
+                        }
+                        @await Html.PartialAsync("_ViewHistoryWidget")
                     </ul>
 
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">

@@ -99,6 +99,21 @@ namespace BacHa.Controllers.Api
 
             try
             {
+                // Check if username already exists
+                var usersResp = await _userService.GetAllAsync();
+                var users = usersResp.Data ?? new List<User>();
+                
+                if (users.Any(u => string.Equals(u.UserName, request.Username, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return BadRequest(new { success = false, message = "Username already exists" });
+                }
+
+                // Check if email already exists
+                if (users.Any(u => string.Equals(u.Email, request.Email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return BadRequest(new { success = false, message = "Email already exists" });
+                }
+
                 var user = new User
                 {
                     Id = Guid.NewGuid(),

@@ -29,6 +29,7 @@ namespace BacHa.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Index([FromQuery] ProductSearch? search)
         {
             // Load categories for filter dropdown
@@ -52,7 +53,7 @@ namespace BacHa.Controllers
             if (!resp.Success || resp.Data == null) return NotFound();
             return View(resp.Data);
         }
-
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Create()
         {
             // Load categories for dropdown
@@ -63,6 +64,7 @@ namespace BacHa.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Create(ProductCreateVM model)
         {
             if (!ModelState.IsValid)
@@ -98,6 +100,7 @@ namespace BacHa.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Edit(Guid id)
         {
             var resp = await _productService.GetByIdAsync(id);
@@ -124,6 +127,7 @@ namespace BacHa.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Edit(Guid id, ProductUpdateVM model)
         {
             if (id != model.Id) return BadRequest();
@@ -161,6 +165,7 @@ namespace BacHa.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var resp = await _productService.GetByIdAsync(id);
@@ -170,6 +175,7 @@ namespace BacHa.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,NhanVien")]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
             var resp = await _productService.DeleteAsync(id);
@@ -258,7 +264,88 @@ namespace BacHa.Controllers
             if (!resp.Success || resp.Data == null || !resp.Data.IsActive) 
                 return NotFound();
             
+            // Lưu lịch sử xem sản phẩm vào Session
+            SaveProductToViewHistory(id);
+            
             return View(resp.Data);
+        }
+
+
+        private void SaveProductToViewHistory(Guid productId)
+        {
+            var viewedProductIds = GetViewedProductIds();
+            
+            // Loại bỏ sản phẩm nếu đã tồn tại (để đưa lên đầu danh sách)
+            viewedProductIds.Remove(productId);
+            
+            // Thêm sản phẩm vào đầu danh sách
+            viewedProductIds.Insert(0, productId);
+            
+            // Giới hạn tối đa 20 sản phẩm trong lịch sử
+            if (viewedProductIds.Count > 20)
+            {
+                viewedProductIds = viewedProductIds.Take(20).ToList();
+            }
+            
+            // Lưu vào Session
+            HttpContext.Session.SetObjectAsJson("ViewedProductIds", viewedProductIds);
+        }
+
+        private List<Guid> GetViewedProductIds()
+        {
+            return HttpContext.Session.GetObjectFromJson<List<Guid>>("ViewedProductIds") ?? new List<Guid>();
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetViewHistory()
+        {
+            try
+            {
+                var viewedProductIds = GetViewedProductIds();
+                if (!viewedProductIds.Any())
+                {
+                    return Json(new { success = true, data = new List<object>() });
+                }
+
+                var products = new List<object>();
+                foreach (var productId in viewedProductIds)
+                {
+                    var resp = await _productService.GetByIdAsync(productId);
+                    if (resp.Success && resp.Data != null && resp.Data.IsActive)
+                    {
+                        products.Add(new
+                        {
+                            id = resp.Data.Id,
+                            name = resp.Data.Name,
+                            price = resp.Data.Price,
+                            imageUrl = resp.Data.ImageUrl,
+                            stock = resp.Data.Stock
+                        });
+                    }
+                }
+
+                return Json(new { success = true, data = products });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Có lỗi xảy ra khi tải lịch sử: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public IActionResult ClearViewHistory()
+        {
+            try
+            {
+                HttpContext.Session.Remove("ViewedProductIds");
+                return Json(new { success = true, message = "Đã xóa lịch sử xem sản phẩm thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Có lỗi xảy ra khi xóa lịch sử: " + ex.Message });
+            }
         }
     }
 }
